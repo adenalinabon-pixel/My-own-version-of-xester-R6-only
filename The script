@@ -1,0 +1,201 @@
+--[[ 
+    RECODED VEREUS MONSTER SCRIPT
+    Controls:
+    T = Unleash Evil Ball
+    M = Immortality Toggle
+]]--
+
+local Player = game:GetService("Players").LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local mouse = Player:GetMouse()
+local RunSrv = game:GetService("RunService")
+local removeuseless = game:GetService("Debris")
+
+-- Variables for R6 parts
+local Root = Character:WaitForChild("HumanoidRootPart")
+local Torso = Character:WaitForChild("Torso")
+local Head = Character:WaitForChild("Head")
+local RightArm = Character["Right Arm"]
+local LeftArm = Character["Left Arm"]
+local RightLeg = Character["Right Leg"]
+local LeftLeg = Character["Left Leg"]
+local Hum = Character:WaitForChild("Humanoid")
+
+Hum.Name = "vereus"
+local hum = Character.vereus
+
+-- State Variables
+local attacking = false
+local ws = 92
+local sine = 0
+local debounce = false
+
+-------------------------------------------------------------------
+-- WELDING SYSTEM (Custom Rigging)
+-------------------------------------------------------------------
+local function weldBetween(a, b)
+    local weld = Instance.new("ManualWeld")
+    weld.Parent = a
+    weld.Part0 = a
+    weld.Part1 = b
+    weld.C0 = a.CFrame:inverse() * b.CFrame
+    return weld
+end
+
+-- Clear default animations
+for _, v in pairs(Character:GetChildren()) do
+    if v.Name == "Animate" then v:Destroy() end
+end
+
+-- Disable standard joints and replace with Lerp-able welds
+local ROOTLERP = weldBetween(Root, Torso)
+local HEADLERP = weldBetween(Head, Torso)
+HEADLERP.C0 = CFrame.new(0, -1.5, -0.5)
+
+local RIGHTARMLERP = weldBetween(RightArm, Torso)
+local LEFTARMLERP = weldBetween(LeftArm, Torso)
+local RIGHTLEGLERP = weldBetween(RightLeg, Torso)
+local LEFTLEGLERP = weldBetween(LeftLeg, Torso)
+
+-------------------------------------------------------------------
+-- MESH & VISUAL SETUP (The Vereus Look)
+-------------------------------------------------------------------
+
+-- The Giant Black Head
+local bighead = Instance.new("Part", Torso)
+bighead.Size = Vector3.new(4.75, 4.89, 4.77)
+bighead.BrickColor = BrickColor.new("Really black")
+bighead.CanCollide = false
+local bigheadweld = weldBetween(bighead, Head)
+local headmesh = Instance.new("SpecialMesh", bighead)
+headmesh.MeshType = "Head"
+headmesh.Scale = Vector3.new(1.25, 1.25, 1.25)
+
+-- The Horns
+local horns = Instance.new("Part", Torso)
+horns.Size = Vector3.new(.1, .1, .1)
+horns.BrickColor = BrickColor.new("Really black")
+horns.Material = "Slate"
+local hornsmesh = Instance.new("SpecialMesh", horns)
+hornsmesh.MeshId = "rbxassetid://434078905"
+hornsmesh.Scale = Vector3.new(13, 12, 12)
+local hornsweld = weldBetween(horns, bighead)
+hornsweld.C0 = CFrame.new(0, -3.3, 0.82) * CFrame.Angles(0, math.pi, 0)
+
+-- Floating Hands
+local hand1 = Instance.new("Part", Torso)
+hand1.Size = Vector3.new(.1, .1, .1)
+hand1.BrickColor = BrickColor.new("White")
+local hand1mesh = Instance.new("SpecialMesh", hand1)
+hand1mesh.MeshId = "rbxassetid://37241605"
+hand1mesh.Scale = Vector3.new(8, 8, 8)
+local HAND1LERP = weldBetween(hand1, Torso)
+
+local hand2 = Instance.new("Part", Torso)
+hand2.Size = Vector3.new(.1, .1, .1)
+hand2.BrickColor = BrickColor.new("White")
+local hand2mesh = Instance.new("SpecialMesh", hand2)
+hand2mesh.MeshId = "rbxassetid://2899129749"
+hand2mesh.Scale = Vector3.new(.8, .8, .8)
+local HAND2LERP = weldBetween(hand2, Torso)
+
+-- Eyes
+local eyeball3 = Instance.new("Part", Torso)
+eyeball3.Size = Vector3.new(0.4, 0.4, 0.4)
+eyeball3.BrickColor = BrickColor.new("Crimson")
+eyeball3.Material = "Neon"
+Instance.new("SpecialMesh", eyeball3).MeshType = "Sphere"
+local eyeball3weld = weldBetween(eyeball3, Head)
+eyeball3weld.C0 = CFrame.new(-1.2, -0.3, 2.65)
+
+local eyeball4 = eyeball3:Clone()
+eyeball4.Parent = Torso
+local eyeball4weld = weldBetween(eyeball4, Head)
+eyeball4weld.C0 = CFrame.new(1.2, -0.3, 2.65)
+
+-------------------------------------------------------------------
+-- ABILITIES & LOGIC
+-------------------------------------------------------------------
+
+function swait(num)
+    if num == 0 or num == nil then
+        RunSrv.Stepped:wait()
+    else
+        for i = 0, num do
+            RunSrv.Stepped:wait()
+        end
+    end
+end
+
+-- T Ability: Unleashed Evil Ball
+mouse.KeyDown:connect(function(key)
+    if key:lower() == "t" then
+        if debounce or attacking then return end
+        debounce = true
+        attacking = true
+        ws = 0
+        
+        local energball = Instance.new("Part", Torso)
+        energball.Shape = "Ball"
+        energball.Material = "Neon"
+        energball.Size = Vector3.new(1, 1, 1)
+        energball.Anchored = true
+        energball.CanCollide = false
+        energball.BrickColor = BrickColor.new("Really black")
+        
+        -- Charge Up
+        for i = 1, 50 do
+            swait()
+            energball.Size = energball.Size + Vector3.new(0.1, 0.1, 0.1)
+            energball.CFrame = hand1.CFrame * CFrame.new(0, 0, -3)
+        end
+        
+        -- Launch
+        energball.Anchored = false
+        local bv = Instance.new("BodyVelocity", energball)
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = mouse.Hit.lookVector * 100
+        
+        removeuseless:AddItem(energball, 5)
+        
+        wait(1)
+        attacking = false
+        debounce = false
+        ws = 92
+    end
+end)
+
+-- God Mode Loop
+coroutine.wrap(function()
+    while true do
+        hum.MaxHealth = math.huge
+        hum.Health = math.huge
+        hum.WalkSpeed = ws
+        wait()
+    end
+end)()
+
+-------------------------------------------------------------------
+-- MAIN ANIMATION LOOP (The "Crawling/Floating" Movement)
+-------------------------------------------------------------------
+RunSrv.RenderStepped:Connect(function()
+    sine = sine + 1
+    
+    if not attacking then
+        -- Vertical Hovering
+        local hover = math.sin(sine/10) * 0.5
+        
+        -- Body Tilt (Vereus Prowl)
+        ROOTLERP.C0 = ROOTLERP.C0:Lerp(CFrame.new(0, 1 + hover, 0) * CFrame.Angles(math.rad(15), 0, 0), 0.1)
+        
+        -- Floating Hands Movement
+        HAND1LERP.C0 = HAND1LERP.C0:Lerp(CFrame.new(4, 2 + math.sin(sine/15), -3) * CFrame.Angles(math.rad(math.sin(sine/20)*20), 0, math.rad(-10)), 0.1)
+        HAND2LERP.C0 = HAND2LERP.C0:Lerp(CFrame.new(-4, 2 + math.sin(sine/15), -3) * CFrame.Angles(math.rad(math.sin(sine/20)*20), 0, math.rad(10)), 0.1)
+        
+        -- Legs (Dangling)
+        LEFTLEGLERP.C0 = LEFTLEGLERP.C0:Lerp(CFrame.new(0.5, 2, 0) * CFrame.Angles(math.rad(10), 0, math.rad(5)), 0.1)
+        RIGHTLEGLERP.C0 = RIGHTLEGLERP.C0:Lerp(CFrame.new(-0.5, 2, 0) * CFrame.Angles(math.rad(10), 0, math.rad(-5)), 0.1)
+    end
+end)
+
+print("Full  VEREUS MONSTER Script Loaded Successfully.")
